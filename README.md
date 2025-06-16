@@ -49,6 +49,7 @@ Example output
 
 ## Considerations
 
-- Modularization
+- Human Readable sizes
+- Modularization and Model
 - Testing
 - Parallelism/Concurrency
