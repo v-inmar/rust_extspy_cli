@@ -46,3 +46,9 @@ Example output
     | APACHE                                                           | 137006     | 0.001 %  |
     +------------------------------------------------------------------+------------+----------+
 ```
+
+## Considerations
+
+- Modularization
+- Testing
+- Parallelism/Concurrency
