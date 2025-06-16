@@ -67,12 +67,10 @@ fn get_file_ext(path: &Path) -> String {
             }
         }
 
-        // there are cases where there are files that doesnt have extensions
+        // there are cases where there are files doesnt have extensions
         // those are the unknowns
-        // i.e. /target/debug/.fingerprint/anstyle-39cb1377a2abc41e/dep-lib-anstyle"
-        // the extension is actually .fingerprint
+        // i.e. /target/debug/.fingerprint/anstyle-39cb1377a2abc41e/dep-lib-anstyle
         // something to work on in the future
-        // println!("{:?}", path);
         return String::from("unknown");
     }
 }
