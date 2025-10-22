@@ -52,4 +52,4 @@ Example output
 - Human Readable sizes
 - Modularization and Model
 - Testing
-- Parallelism/Concurrency
+- Parallelism/Concurrency :white_check_mark:
