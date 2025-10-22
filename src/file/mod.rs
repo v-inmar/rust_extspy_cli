@@ -1,5 +1,5 @@
-use std::path::Path;
 use std::fs;
+use std::path::Path;
 
 pub fn get_file_ext(path: &Path) -> String {
     if let Some(ext) = path.extension() {
@@ -34,10 +34,10 @@ pub fn get_file_size(path: &Path) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::env;
     use std::fs::File;
     use std::io::Write;
     use std::path::Path;
-    use std::env;
 
     fn temp_test_file(name: &str, content: Option<&str>) -> std::path::PathBuf {
         let temp_dir = env::temp_dir();

@@ -1,11 +1,13 @@
 use prettytable::{Cell, Row, Table};
 use std::collections::HashMap;
 use std::path::Path;
+use std::time::Instant;
 use std::{env, fs};
 
 mod file;
 
 fn main() {
+    let start = Instant::now();
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
         print_usage();
@@ -41,6 +43,8 @@ fn main() {
     }
 
     table.printstd();
+    let elapsed_time = start.elapsed();
+    print!("Elapsed time: {:?}\n", elapsed_time);
 }
 
 fn print_usage() {
