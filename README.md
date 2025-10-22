@@ -100,5 +100,5 @@ Example output
 
 - Human Readable sizes
 - Modularization and Model
-- Testing
+- Testing :white_check_mark:
 - Parallelism/Concurrency :white_check_mark:
