@@ -6,7 +6,8 @@ use std::{env, fs};
 
 mod file;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let start = Instant::now();
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
@@ -16,7 +17,7 @@ fn main() {
 
     let mut extensions: HashMap<String, u64> = HashMap::new();
 
-    process_directory(&Path::new(&args[1]), &mut extensions);
+    process_directory(&Path::new(&args[1]), &mut extensions).await;
 
     let total: u64 = extensions.values().copied().sum();
 
@@ -89,7 +90,7 @@ fn print_usage() {
 // }
 
 // function that deals if the path is directory
-fn process_directory(path: &Path, ext_map: &mut HashMap<String, u64>) {
+async fn process_directory(path: &Path, ext_map: &mut HashMap<String, u64>) {
     let entries = fs::read_dir(path);
     match entries {
         Ok(children) => {
@@ -97,7 +98,8 @@ fn process_directory(path: &Path, ext_map: &mut HashMap<String, u64>) {
                 match child {
                     Ok(entry) => {
                         if entry.path().is_file() {
-                            let ext_name_and_file_size: (String, u64) = process_file(&entry.path());
+                            let ext_name_and_file_size: (String, u64) =
+                                process_file(&entry.path()).await;
                             insert_to_hashmap(
                                 ext_map,
                                 &ext_name_and_file_size.0,
@@ -105,7 +107,7 @@ fn process_directory(path: &Path, ext_map: &mut HashMap<String, u64>) {
                             );
                         } else {
                             //recursive call
-                            process_directory(&entry.path(), ext_map);
+                            Box::pin(process_directory(&entry.path(), ext_map)).await;
                         }
                     }
                     Err(e) => {
@@ -121,12 +123,12 @@ fn process_directory(path: &Path, ext_map: &mut HashMap<String, u64>) {
 }
 
 // function that deals if the path is file
-fn process_file(path: &Path) -> (String, u64) {
+async fn process_file(path: &Path) -> (String, u64) {
     // get extension
-    let ext_string: String = file::get_file_ext(&path);
+    let ext_string: String = file::get_file_ext(&path).await;
 
     // get file size
-    let size: u64 = file::get_file_size(&path);
+    let size: u64 = file::get_file_size(&path).await;
 
     // return tuple of extension and metadata
     return (ext_string, size);

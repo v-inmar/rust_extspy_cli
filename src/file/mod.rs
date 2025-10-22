@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::Path;
 
-pub fn get_file_ext(path: &Path) -> String {
+pub async fn get_file_ext(path: &Path) -> String {
     if let Some(ext) = path.extension() {
         return ext // returns Option<&OsStr> (to handle invalid utf8)
             .to_string_lossy() // produces Cow<str> (clone on write)
@@ -24,7 +24,7 @@ pub fn get_file_ext(path: &Path) -> String {
     }
 }
 
-pub fn get_file_size(path: &Path) -> u64 {
+pub async fn get_file_size(path: &Path) -> u64 {
     match fs::metadata(&path) {
         Ok(metadata) => metadata.len(),
         Err(_e) => 0,
@@ -50,51 +50,51 @@ mod tests {
         file_path
     }
 
-    #[test]
-    fn test_get_file_ext_with_valid_extension() {
+    #[tokio::test]
+    async fn test_get_file_ext_with_valid_extension() {
         let path = Path::new("/path/to/file.txt");
-        assert_eq!(get_file_ext(&path), "txt");
+        assert_eq!(get_file_ext(&path).await, "txt");
     }
 
-    #[test]
-    fn test_get_file_ext_no_extension() {
+    #[tokio::test]
+    async fn test_get_file_ext_no_extension() {
         let path = Path::new("/path/to/README");
-        assert_eq!(get_file_ext(&path), "unknown");
+        assert_eq!(get_file_ext(&path).await, "unknown");
     }
 
-    #[test]
-    fn test_get_file_ext_hidden_file() {
+    #[tokio::test]
+    async fn test_get_file_ext_hidden_file() {
         let path = Path::new("/path/to/.gitignore");
-        assert_eq!(get_file_ext(&path), "gitignore");
+        assert_eq!(get_file_ext(&path).await, "gitignore");
     }
 
-    #[test]
-    fn test_get_file_ext_directory_path() {
+    #[tokio::test]
+    async fn test_get_file_ext_directory_path() {
         let path = Path::new("/path/to/some/directory/");
-        assert_eq!(get_file_ext(&path), "unknown");
+        assert_eq!(get_file_ext(&path).await, "unknown");
     }
 
-    #[test]
-    fn test_get_file_ext_with_multiple_extensions() {
+    #[tokio::test]
+    async fn test_get_file_ext_with_multiple_extensions() {
         let path = Path::new("/path/to/archive.tar.gz");
-        assert_eq!(get_file_ext(&path), "gz");
+        assert_eq!(get_file_ext(&path).await, "gz");
     }
 
-    #[test]
-    fn test_get_file_size_valid_file() {
+    #[tokio::test]
+    async fn test_get_file_size_valid_file() {
         let path = temp_test_file("test_file.txt", Some("This is a test file"));
-        assert_eq!(get_file_size(&path), 19); // File length is 19 bytes
+        assert_eq!(get_file_size(&path).await, 19); // File length is 19 bytes
     }
 
-    #[test]
-    fn test_get_file_size_non_existent_file() {
+    #[tokio::test]
+    async fn test_get_file_size_non_existent_file() {
         let path = Path::new("/path/to/non_existent_file.txt");
-        assert_eq!(get_file_size(&path), 0);
+        assert_eq!(get_file_size(&path).await, 0);
     }
 
-    #[test]
-    fn test_get_file_size_directory() {
+    #[tokio::test]
+    async fn test_get_file_size_directory() {
         let path = Path::new("/path/to/some/directory/");
-        assert_eq!(get_file_size(&path), 0);
+        assert_eq!(get_file_size(&path).await, 0);
     }
 }
