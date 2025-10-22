@@ -1,9 +1,14 @@
 use prettytable::{Cell, Row, Table};
 use std::collections::HashMap;
 use std::path::Path;
+use std::time::Instant;
 use std::{env, fs};
 
-fn main() {
+mod file;
+
+#[tokio::main]
+async fn main() {
+    let start = Instant::now();
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
         print_usage();
@@ -12,7 +17,7 @@ fn main() {
 
     let mut extensions: HashMap<String, u64> = HashMap::new();
 
-    process_directory(&Path::new(&args[1]), &mut extensions);
+    process_directory(&Path::new(&args[1]), &mut extensions).await;
 
     let total: u64 = extensions.values().copied().sum();
 
@@ -39,6 +44,8 @@ fn main() {
     }
 
     table.printstd();
+    let elapsed_time = start.elapsed();
+    print!("Elapsed time: {:?}\n", elapsed_time);
 }
 
 fn print_usage() {
@@ -52,40 +59,38 @@ fn print_usage() {
     table.printstd();
 }
 
-fn get_file_ext(path: &Path) -> String {
-    if let Some(ext) = path.extension() {
-        return ext // returns Option<&OsStr> (to handle invalid utf8)
-            .to_string_lossy() // produces Cow<str> (clone on write)
-            .into_owned(); // guarantees owned string
-    } else {
-        // path.extensions returns None for files such as .gitignore because they are classified as having no extensions
-        // so we check them
-        if let Some(name) = path.file_name() {
-            let lossy_name_str = name.to_string_lossy();
-            if lossy_name_str.starts_with(".") && lossy_name_str.len() > 1 {
-                return lossy_name_str.into_owned().split_off(1);
-            }
-        }
+// fn get_file_ext(path: &Path) -> String {
+//     if let Some(ext) = path.extension() {
+//         return ext // returns Option<&OsStr> (to handle invalid utf8)
+//             .to_string_lossy() // produces Cow<str> (clone on write)
+//             .into_owned(); // guarantees owned string
+//     } else {
+//         // path.extensions returns None for files such as .gitignore because they are classified as having no extensions
+//         // so we check them
+//         if let Some(name) = path.file_name() {
+//             let lossy_name_str = name.to_string_lossy();
+//             if lossy_name_str.starts_with(".") && lossy_name_str.len() > 1 {
+//                 return lossy_name_str.into_owned().split_off(1);
+//             }
+//         }
 
-        // there are cases where there are files that doesnt have extensions
-        // those are the unknowns
-        // i.e. /target/debug/.fingerprint/anstyle-39cb1377a2abc41e/dep-lib-anstyle"
-        // the extension is actually .fingerprint
-        // something to work on in the future
-        // println!("{:?}", path);
-        return String::from("unknown");
-    }
-}
+//         // there are cases where there are files doesnt have extensions
+//         // those are the unknowns
+//         // i.e. /target/debug/.fingerprint/anstyle-39cb1377a2abc41e/dep-lib-anstyle
+//         // something to work on in the future
+//         return String::from("unknown");
+//     }
+// }
 
-fn get_file_size(path: &Path) -> u64 {
-    match fs::metadata(&path) {
-        Ok(metadata) => metadata.len(),
-        Err(_e) => 0,
-    }
-}
+// fn get_file_size(path: &Path) -> u64 {
+//     match fs::metadata(&path) {
+//         Ok(metadata) => metadata.len(),
+//         Err(_e) => 0,
+//     }
+// }
 
 // function that deals if the path is directory
-fn process_directory(path: &Path, ext_map: &mut HashMap<String, u64>) {
+async fn process_directory(path: &Path, ext_map: &mut HashMap<String, u64>) {
     let entries = fs::read_dir(path);
     match entries {
         Ok(children) => {
@@ -93,7 +98,8 @@ fn process_directory(path: &Path, ext_map: &mut HashMap<String, u64>) {
                 match child {
                     Ok(entry) => {
                         if entry.path().is_file() {
-                            let ext_name_and_file_size: (String, u64) = process_file(&entry.path());
+                            let ext_name_and_file_size: (String, u64) =
+                                process_file(&entry.path()).await;
                             insert_to_hashmap(
                                 ext_map,
                                 &ext_name_and_file_size.0,
@@ -101,7 +107,7 @@ fn process_directory(path: &Path, ext_map: &mut HashMap<String, u64>) {
                             );
                         } else {
                             //recursive call
-                            process_directory(&entry.path(), ext_map);
+                            Box::pin(process_directory(&entry.path(), ext_map)).await;
                         }
                     }
                     Err(e) => {
@@ -117,12 +123,12 @@ fn process_directory(path: &Path, ext_map: &mut HashMap<String, u64>) {
 }
 
 // function that deals if the path is file
-fn process_file(path: &Path) -> (String, u64) {
+async fn process_file(path: &Path) -> (String, u64) {
     // get extension
-    let ext_string: String = get_file_ext(&path);
+    let ext_string: String = file::get_file_ext(&path).await;
 
     // get file size
-    let size: u64 = get_file_size(&path);
+    let size: u64 = file::get_file_size(&path).await;
 
     // return tuple of extension and metadata
     return (ext_string, size);
